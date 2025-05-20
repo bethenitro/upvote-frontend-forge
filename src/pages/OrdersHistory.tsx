@@ -39,6 +39,7 @@ interface Order {
   nextRunAt?: string;
   frequency?: string;
   cost: number;
+  cancelledAt?: string;
 }
 
 const OrdersHistory = () => {
