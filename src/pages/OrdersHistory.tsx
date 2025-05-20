@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/services/api';
-import { toast } from "@/components/ui/use-toast";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -17,17 +16,30 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Clock, Loader2, AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { 
+  MoreVertical, 
+  Search, 
+  Filter, 
+  ArrowUpDown, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  XCircle
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
+// Define the Order type
 interface Order {
   id: string;
   type: string;
@@ -35,7 +47,7 @@ interface Order {
   upvotes: number;
   status: string;
   createdAt: string;
-  completedAt: string | null;
+  completedAt?: string; // Make completedAt optional
   nextRunAt?: string;
   frequency?: string;
   cost: number;
@@ -44,276 +56,180 @@ interface Order {
 
 const OrdersHistory = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Filtering and sorting
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('newest');
-  
-  // Pagination (simplified for this implementation)
-  const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 10;
-  
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const { data: ordersData, isLoading, error } = useQuery({
+    queryKey: ['orders'],
+    queryFn: api.orders.getOrdersHistory,
+  });
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const data = await api.orders.getOrders();
-        setOrders(data);
-      } catch (error) {
-        console.error('Failed to fetch orders:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load orders history.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchOrders();
-  }, []);
-  
-  // Filter and sort orders
-  const filteredOrders = orders.filter(order => {
-    // Search filter
-    const matchesSearch = searchTerm === '' || 
-      order.redditUrl.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Status filter
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    
-    // Type filter
-    const matchesType = typeFilter === 'all' || order.type === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
-  });
-  
-  // Sort filtered orders
-  const sortedOrders = [...filteredOrders].sort((a, b) => {
-    switch (sortBy) {
-      case 'newest':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case 'oldest':
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      case 'highest-cost':
-        return b.cost - a.cost;
-      case 'lowest-cost':
-        return a.cost - b.cost;
-      default:
-        return 0;
+    if (ordersData) {
+      setOrders(ordersData);
     }
-  });
-  
-  // Get current orders
-  const indexOfLastOrder = currentPage * ordersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentOrders = sortedOrders.slice(indexOfFirstOrder, indexOfLastOrder);
-  const totalPages = Math.ceil(sortedOrders.length / ordersPerPage);
-  
-  // Format date
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '—';
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-  
+  }, [ordersData]);
+
+  const filteredOrders = orders.filter((order) =>
+    order.redditUrl.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    order.status.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
-    let bgColor = 'bg-gray-100 text-gray-800';
-    let icon = null;
-    
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'completed':
-        bgColor = 'bg-green-100 text-green-800';
-        icon = <CheckCircle className="w-3 h-3 mr-1" />;
-        break;
-      case 'in-progress':
-        bgColor = 'bg-blue-100 text-blue-800';
-        icon = <Clock className="w-3 h-3 mr-1" />;
-        break;
-      case 'scheduled':
-        bgColor = 'bg-purple-100 text-purple-800';
-        icon = <Clock className="w-3 h-3 mr-1" />;
-        break;
+        return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Completed</Badge>;
+      case 'active':
+      case 'processing':
+        return <Badge className="bg-blue-500"><Clock className="w-3 h-3 mr-1" /> Active</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-500"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-500"><AlertCircle className="w-3 h-3 mr-1" /> Failed</Badge>;
       case 'cancelled':
-        bgColor = 'bg-red-100 text-red-800';
-        icon = <AlertCircle className="w-3 h-3 mr-1" />;
-        break;
+        return <Badge variant="outline" className="text-muted-foreground border-muted-foreground"><XCircle className="w-3 h-3 mr-1" /> Cancelled</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
     }
-    
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor}`}>
-        {icon}
-        <span className="capitalize">{status}</span>
-      </span>
-    );
   };
-  
+
+  // Format date
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return format(new Date(dateString), 'MMM d, yyyy h:mm a');
+  };
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Orders History</h1>
-      
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+        <h1 className="text-2xl font-semibold">Orders History</h1>
+        
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input 
+              placeholder="Search orders..." 
+              className="pl-9 w-full" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>All</DropdownMenuItem>
+              <DropdownMenuItem>Completed</DropdownMenuItem>
+              <DropdownMenuItem>Active</DropdownMenuItem>
+              <DropdownMenuItem>Pending</DropdownMenuItem>
+              <DropdownMenuItem>Failed</DropdownMenuItem>
+              <DropdownMenuItem>Cancelled</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-1">
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                <span>Sort</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem>Newest first</DropdownMenuItem>
+              <DropdownMenuItem>Oldest first</DropdownMenuItem>
+              <DropdownMenuItem>Highest cost</DropdownMenuItem>
+              <DropdownMenuItem>Lowest cost</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle>All Orders</CardTitle>
-          <CardDescription>
-            View and manage your past and current orders
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="col-span-1 md:col-span-2">
-                <Input
-                  placeholder="Search by order ID or Reddit URL"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="one-time">One-Time</SelectItem>
-                    <SelectItem value="recurring">Recurring</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          {isLoading ? (
+            <div className="py-10 text-center">
+              <div className="w-10 h-10 border-4 border-upvote-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-sm text-muted-foreground">Loading orders...</p>
             </div>
-            
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                Showing {Math.min(filteredOrders.length, indexOfFirstOrder + 1)}-{Math.min(indexOfLastOrder, filteredOrders.length)} of {filteredOrders.length} orders
-              </div>
-              
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="highest-cost">Highest Cost</SelectItem>
-                  <SelectItem value="lowest-cost">Lowest Cost</SelectItem>
-                </SelectContent>
-              </Select>
+          ) : error ? (
+            <div className="py-10 text-center text-red-500">
+              <AlertCircle className="mx-auto mb-2 h-10 w-10" />
+              <p>Failed to load orders</p>
             </div>
-            
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-upvote-primary" />
-              </div>
-            ) : filteredOrders.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No orders found matching your filters.</p>
-              </div>
-            ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Reddit Post</TableHead>
-                        <TableHead>Upvotes</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Completed</TableHead>
-                        <TableHead>Cost</TableHead>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Reddit URL</TableHead>
+                    <TableHead>Upvotes</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Completed</TableHead>
+                    <TableHead>Cost</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOrders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-10 text-muted-foreground">
+                        No orders found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredOrders.map((order) => (
+                      <TableRow key={order.id} className="table-row">
+                        <TableCell className="font-mono text-xs">{order.id.slice(0, 8)}</TableCell>
+                        <TableCell className="capitalize">{order.type}</TableCell>
+                        <TableCell className="max-w-[180px] truncate">
+                          <a 
+                            href={order.redditUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="hover:text-upvote-primary"
+                          >
+                            {order.redditUrl}
+                          </a>
+                        </TableCell>
+                        <TableCell>{order.upvotes}</TableCell>
+                        <TableCell><StatusBadge status={order.status} /></TableCell>
+                        <TableCell>{formatDate(order.createdAt)}</TableCell>
+                        <TableCell>{formatDate(order.completedAt)}</TableCell>
+                        <TableCell>{order.cost.toFixed(2)} credits</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>View Details</DropdownMenuItem>
+                              <DropdownMenuItem>Reorder</DropdownMenuItem>
+                              <DropdownMenuItem>Get Support</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentOrders.map((order) => (
-                        <TableRow key={order.id} className="table-row">
-                          <TableCell className="font-medium">{order.id}</TableCell>
-                          <TableCell className="capitalize">{order.type}</TableCell>
-                          <TableCell className="max-w-[200px] truncate">
-                            <a 
-                              href={order.redditUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-upvote-primary hover:underline"
-                            >
-                              {order.redditUrl}
-                            </a>
-                          </TableCell>
-                          <TableCell>{order.upvotes}</TableCell>
-                          <TableCell>
-                            <StatusBadge status={order.status} />
-                          </TableCell>
-                          <TableCell>{formatDate(order.createdAt)}</TableCell>
-                          <TableCell>{formatDate(order.completedAt)}</TableCell>
-                          <TableCell>{order.cost.toFixed(2)} credits</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center space-x-2 mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                    >
-                      Previous
-                    </Button>
-                    
-                    <div className="flex items-center space-x-1">
-                      {[...Array(totalPages)].map((_, i) => (
-                        <Button
-                          key={i}
-                          variant={currentPage === i + 1 ? "default" : "outline"}
-                          size="sm"
-                          className="w-8 h-8 p-0"
-                          onClick={() => setCurrentPage(i + 1)}
-                        >
-                          {i + 1}
-                        </Button>
-                      ))}
-                    </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

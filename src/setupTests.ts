@@ -1,6 +1,6 @@
 
 // Setup file for Jest
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 
 // Mock global objects if needed
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
