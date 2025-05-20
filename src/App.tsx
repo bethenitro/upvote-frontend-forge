@@ -35,41 +35,41 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <ThemeProvider>
-          <Routes>
-            {/* Public routes */}
-            <Route element={
-              <PublicRoute>
-                <PublicLayout />
-              </PublicRoute>
-            }>
-              <Route index element={<Home />} />
-              <Route path="login" element={<Login />} />
-              <Route path="signup" element={<Signup />} />
-            </Route>
+          <AuthProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route element={
+                <PublicRoute>
+                  <PublicLayout />
+                </PublicRoute>
+              }>
+                <Route index element={<Home />} />
+                <Route path="login" element={<Login />} />
+                <Route path="signup" element={<Signup />} />
+              </Route>
 
-            {/* Protected routes */}
-            <Route element={
-              <ProtectedRoute>
-                <AuthProvider>
+              {/* Protected routes */}
+              <Route element={
+                <ProtectedRoute>
                   <AppProvider>
                     <Toaster />
                     <Sonner />
                     <Layout />
                   </AppProvider>
-                </AuthProvider>
-              </ProtectedRoute>
-            }>
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="order/new" element={<NewOrder />} />
-              <Route path="orders/auto" element={<AutoOrders />} />
-              <Route path="orders/history" element={<OrdersHistory />} />
-              <Route path="payments/history" element={<PaymentHistory />} />
-              <Route path="account/topup" element={<TopUpAccount />} />
-            </Route>
+                </ProtectedRoute>
+              }>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="order/new" element={<NewOrder />} />
+                <Route path="orders/auto" element={<AutoOrders />} />
+                <Route path="orders/history" element={<OrdersHistory />} />
+                <Route path="payments/history" element={<PaymentHistory />} />
+                <Route path="account/topup" element={<TopUpAccount />} />
+              </Route>
 
-            {/* 404 page */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* 404 page */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>
     </TooltipProvider>
