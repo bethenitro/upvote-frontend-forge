@@ -60,12 +60,13 @@ const OrdersHistory = () => {
 
   const { data: ordersData, isLoading, error } = useQuery({
     queryKey: ['orders'],
-    queryFn: api.orders.getOrdersHistory,
+    queryFn: api.orders.getOrders,
   });
 
   useEffect(() => {
     if (ordersData) {
-      setOrders(ordersData);
+      // Cast the data to Order[] to ensure type compatibility
+      setOrders(ordersData as Order[]);
     }
   }, [ordersData]);
 

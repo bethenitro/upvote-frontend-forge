@@ -60,6 +60,13 @@ export const api = {
     },
     
     /**
+     * Get orders history (alias for getOrders for backward compatibility)
+     */
+    getOrdersHistory: async () => {
+      return api.orders.getOrders();
+    },
+    
+    /**
      * Get auto orders
      */
     getAutoOrders: async () => {
