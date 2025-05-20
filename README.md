@@ -1,73 +1,112 @@
-# Welcome to your Lovable project
 
-## Project info
+# UpvoteHub - Reddit Upvote Service
 
-**URL**: https://lovable.dev/projects/2e1c5ac1-df86-41b5-bb99-0b17b19f5653
+UpvoteHub is a service for purchasing Reddit upvotes for your posts. This frontend application provides an intuitive interface for placing one-time and recurring upvote orders, managing your account, and tracking your order history.
 
-## How can I edit this code?
+## Demo
 
-There are several ways of editing your application.
+![UpvoteHub Screenshot](https://i.imgur.com/2jGFkNe.png)
 
-**Use Lovable**
+## Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/2e1c5ac1-df86-41b5-bb99-0b17b19f5653) and start prompting.
+- **User Dashboard**: View account overview, activity charts, and stats
+- **New Orders**: Place one-time upvote orders for Reddit posts
+- **Auto Orders**: Schedule recurring upvotes for important content
+- **Order History**: Track past and current orders with filtering and sorting
+- **Payment History**: View all transactions and download receipts
+- **Top Up Account**: Add credits to your account using various payment methods
 
-Changes made via Lovable will be committed automatically to this repo.
+## Technology Stack
 
-**Use your preferred IDE**
+- **Framework**: React.js (with TypeScript)
+- **Styling**: Tailwind CSS
+- **State Management**: React Context API
+- **Routing**: React Router v6
+- **UI Components**: shadcn/ui
+- **API Integration**: Stubbed API services for frontend development
+- **Charts**: Recharts for data visualization
+- **Testing**: Jest and React Testing Library
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Getting Started
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Prerequisites
 
-Follow these steps:
+- Node.js (v14 or later)
+- npm (v6 or later)
 
+### Installation
+
+1. Clone the repository:
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone <repository-url>
+cd upvotehub
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Install dependencies:
+```sh
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. Start the development server:
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+4. Open your browser and navigate to [http://localhost:8080](http://localhost:8080)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Project Structure
 
-**Use GitHub Codespaces**
+```
+upvotehub/
+├── public/             # Static assets
+├── src/
+│   ├── components/     # Reusable UI components
+│   │   ├── layout/     # Layout components (Sidebar, Header)
+│   │   └── ui/         # UI components from shadcn
+│   ├── context/        # React context providers
+│   ├── hooks/          # Custom React hooks
+│   ├── lib/            # Utility functions
+│   ├── mocks/          # Mock data for development
+│   ├── pages/          # Page components
+│   ├── services/       # API service layer
+│   └── __tests__/      # Test files
+├── tailwind.config.ts  # Tailwind CSS configuration
+└── package.json        # Project dependencies
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Available Routes
 
-## What technologies are used for this project?
+- `/` - Dashboard (User Panel)
+- `/order/new` - New Order form
+- `/orders/auto` - Auto Orders management
+- `/orders/history` - Order History table
+- `/payments/history` - Payment History table
+- `/account/topup` - Top Up Account form
 
-This project is built with:
+## Testing
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Run the test suite:
 
-## How can I deploy this project?
+```sh
+npm test
+```
 
-Simply open [Lovable](https://lovable.dev/projects/2e1c5ac1-df86-41b5-bb99-0b17b19f5653) and click on Share -> Publish.
+## Build for Production
 
-## Can I connect a custom domain to my Lovable project?
+Create a production build:
 
-Yes, you can!
+```sh
+npm run build
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+The build files will be in the `dist` directory.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgements
+
+- [shadcn/ui](https://ui.shadcn.com/) for the UI components
+- [Tailwind CSS](https://tailwindcss.com/) for styling
+- [Recharts](https://recharts.org/) for data visualization
