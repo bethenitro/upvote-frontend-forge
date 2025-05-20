@@ -7,6 +7,6 @@
     "types": ["jest", "@testing-library/jest-dom", "node"],
     "isolatedModules": false
   },
-  "include": ["src", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+  "include": ["src", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "src/jest-dom.d.ts"],
   "exclude": ["node_modules"]
 }
